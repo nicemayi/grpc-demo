@@ -12,6 +12,6 @@ message AddResponse {
     string message = 2;
 }
 
-service Calculator {
+service CalculatorService {
     rpc Add(AddRequest) returns(AddResponse);
 }

@@ -1,8 +1,6 @@
 package svc
 
-import (
-	"server/calculator/internal/config"
-)
+import "go-server/rpc/internal/config"
 
 type ServiceContext struct {
 	Config config.Config

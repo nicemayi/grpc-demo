@@ -4,4 +4,8 @@ goctl api new greet
 
 go mod tidy
 
-ln -s ./proto/ ./go-server/calculator/rpc/
+under grpc-demo 创建symlink
+ln -s $PWD/proto $PWD/go-server/proto
+
+then under $PWD/go-server/
+goctl rpc proto -src ./proto/calculator.proto -dir ./rpc
