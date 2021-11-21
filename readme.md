@@ -5,7 +5,10 @@ goctl api new greet
 go mod tidy
 
 under grpc-demo 创建symlink
-ln -s $PWD/proto $PWD/go-server/proto
+ln -s $PWD/proto $PWD/go_server/proto
 
-then under $PWD/go-server/
-goctl rpc proto -src ./proto/calculator.proto -dir ./rpc
+under go_server
+protoc --go_out=. --go-grpc_out=. proto/go_server/calculator.proto
+
+protoc --python_out=. --python_grpc_out=. proto/go_server/calculator.proto
+ln -s $PWD/proto $PWD/python_client/proto

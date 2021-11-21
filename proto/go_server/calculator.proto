@@ -5,6 +5,7 @@ package calculator;
 message AddRequest {
     int32 a = 1;
     int32 b = 2;
+    int32 c = 3;
 }
 
 message AddResponse {
@@ -12,6 +13,17 @@ message AddResponse {
     string message = 2;
 }
 
+message MultipleRequest {
+    int32 a = 1;
+    int32 b = 2;
+}
+
+message MultipleResponse {
+    int32 results = 1;
+    string message = 2;
+}
+
 service CalculatorService {
     rpc Add(AddRequest) returns(AddResponse);
+    rpc Multiple(MultipleRequest) returns(MultipleResponse);
 }
