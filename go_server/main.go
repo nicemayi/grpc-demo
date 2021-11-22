@@ -1,71 +1,40 @@
 package main
 
 import (
-	"context"
+	"fmt"
 	"log"
 	"net"
 	"net/http"
+	"os"
 	"sync"
 
-	"go_server/handler"
+	httpHandler "go_server/http_handler"
+	rpcHandler "go_server/rpc_handler"
 	pb "go_server/proto/go_server"
-	calculator "go_server/service"
-	"go_server/service/dto"
 
 	"google.golang.org/grpc"
 )
 
-const (
-	rpcPort  = ":50051"
-	httpPort = ":8080"
+func init() {
+	if os.Getenv("REDIS_URL") == "" {
+		log.Panic("Need REDIS_URL")
+	}
+	if os.Getenv("REDIS_PORT") == "" {
+		log.Panic("Need REDIS_PORT")
+	}
+	if os.Getenv("RPC_PORT") == "" {
+		log.Panic("Need RPC_PORT")
+	}
+	if os.Getenv("HTTP_PORT") == "" {
+		log.Panic("Need HTTP_PORT")
+	}
+	log.Print("Initial check passed!")
+}
+
+var (
+	rpcPort  = fmt.Sprintf(":%s", os.Getenv("RPC_PORT"))
+	httpPort = fmt.Sprintf(":%s", os.Getenv("HTTP_PORT"))
 )
-
-// server is used to implement helloworld.GreeterServer.
-type server struct {
-	pb.UnimplementedCalculatorServiceServer
-}
-
-func (s *server) Add(ctx context.Context, in *pb.AddRequest) (*pb.CommonResponse, error) {
-	res, err := calculator.Add(ctx, &dto.AddRequest{
-		A: int(in.GetA()),
-		B: int(in.GetB()),
-		C: int(in.GetC()),
-	})
-	if err != nil {
-		log.Fatalf("can not add with error %v", err)
-	}
-	return &pb.CommonResponse{
-		Results: int32(res),
-		Message: "Success",
-	}, nil
-}
-
-func (s *server) Multiple(ctx context.Context, in *pb.MultipleRequest) (*pb.CommonResponse, error) {
-	res, err := calculator.Multiple(ctx, &dto.MultipleRequest{
-		A: int(in.GetA()),
-		B: int(in.GetB()),
-	})
-	if err != nil {
-		log.Fatalf("can not multiple with error %v", err)
-	}
-	return &pb.CommonResponse{
-		Results: int32(res),
-		Message: "Success",
-	}, nil
-}
-
-func (s *server) Fib(ctx context.Context, in *pb.FibRequest) (*pb.CommonResponse, error) {
-	res, err := calculator.Fib(ctx, &dto.FibRequest{
-		Number: int(in.GetNumber()),
-	})
-	if err != nil {
-		log.Fatalf("can not fib with error %v", err)
-	}
-	return &pb.CommonResponse{
-		Results: int32(res),
-		Message: "Success",
-	}, nil
-}
 
 func main() {
 	var wg sync.WaitGroup
@@ -77,7 +46,9 @@ func main() {
 			wg.Done()
 		}()
 		rpcServer := grpc.NewServer()
-		pb.RegisterCalculatorServiceServer(rpcServer, &server{})
+		rpcHandeler := rpcHandler.NewRpcHandler()
+		pb.RegisterCalculatorServiceServer(rpcServer, rpcHandeler)
+
 		lis, err := net.Listen("tcp", rpcPort)
 		if err != nil {
 			log.Fatalf("failed to listen: %v", err)
@@ -85,19 +56,21 @@ func main() {
 		if err := rpcServer.Serve(lis); err != nil {
 			log.Fatalf("failed to serve: %v", err)
 		}
-		log.Printf("server listening at %v", lis.Addr())
+		log.Printf("rpc server listening at %v", lis.Addr())
 	}()
 
 	// server http
+	h := httpHandler.NewHttpHanlder()
 	wg.Add(1)
 	go func() {
 		defer func() {
 			wg.Done()
 		}()
-		http.HandleFunc("/add", handler.Add)
-		http.HandleFunc("/multiple", handler.Multiple)
-		http.HandleFunc("/fib", handler.Fib)
+		http.HandleFunc("/add", h.Add)
+		http.HandleFunc("/multiple", h.Multiple)
+		http.HandleFunc("/fib", h.Fib)
 		log.Fatal(http.ListenAndServe(httpPort, nil))
+		log.Printf("http server listening at %v", httpPort)
 	}()
 
 	wg.Wait()

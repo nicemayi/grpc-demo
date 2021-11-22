@@ -1,4 +1,4 @@
-package handler
+package http_handler
 
 import (
 	"context"
@@ -10,7 +10,13 @@ import (
 	"net/http"
 )
 
-func Fib(w http.ResponseWriter, req *http.Request) {
+type httpHandler struct{}
+
+func NewHttpHanlder() *httpHandler {
+	return &httpHandler{}
+}
+
+func (h *httpHandler) Fib(w http.ResponseWriter, req *http.Request) {
 	decoder := json.NewDecoder(req.Body)
 	var data dto.FibRequest
 	err := decoder.Decode(&data)
@@ -21,7 +27,7 @@ func Fib(w http.ResponseWriter, req *http.Request) {
 	fmt.Fprintf(w, "%d", res)
 }
 
-func Multiple(w http.ResponseWriter, req *http.Request) {
+func (h *httpHandler) Multiple(w http.ResponseWriter, req *http.Request) {
 	decoder := json.NewDecoder(req.Body)
 	var data dto.MultipleRequest
 	err := decoder.Decode(&data)
@@ -33,7 +39,7 @@ func Multiple(w http.ResponseWriter, req *http.Request) {
 	fmt.Fprintf(w, "%d", res)
 }
 
-func Add(w http.ResponseWriter, req *http.Request) {
+func (h *httpHandler) Add(w http.ResponseWriter, req *http.Request) {
 	decoder := json.NewDecoder(req.Body)
 	var data dto.AddRequest
 	err := decoder.Decode(&data)

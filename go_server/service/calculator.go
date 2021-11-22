@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"time"
 
-	"go_server/cache"
+	"go_server/service/cache"
 
 	"github.com/go-redis/redis/v8"
 
