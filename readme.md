@@ -12,3 +12,6 @@ protoc --go_out=. --go-grpc_out=. proto/go_server/calculator.proto
 
 protoc --python_out=. --python_grpc_out=. proto/go_server/calculator.proto
 ln -s $PWD/proto $PWD/python_client/proto
+
+
+protoc --go_out=. --go-grpc_out=. proto/go_server/calculator.proto
