@@ -22,6 +22,7 @@ package main
 import (
 	"context"
 	"log"
+	"sync"
 	"time"
 
 	pb "go_client/proto/go_server"
@@ -32,6 +33,15 @@ import (
 const (
 	address = "localhost:50051"
 )
+
+func worker(ctx context.Context, c pb.CalculatorServiceClient, i int) int32 {
+	r, err := c.Fib(ctx, &pb.FibRequest{Number: int32(i)})
+	if err != nil {
+		log.Fatalf("could not fib: %v", err)
+	}
+	// log.Printf("%d-th result: %v", i, r.GetResults())
+	return r.GetResults()
+}
 
 func main() {
 	// Set up a connection to the server.
@@ -50,4 +60,22 @@ func main() {
 		log.Fatalf("could not add: %v", err)
 	}
 	log.Printf("Result: %v", r.GetResults())
+
+	startTime := time.Now()
+	for i := 0; i < 50; i++ {
+		worker(ctx, c, i+1)
+	}
+	log.Printf("Sync: total time cost: %v seconds", time.Since(startTime).Seconds())
+
+	startTime = time.Now()
+	var wg sync.WaitGroup
+	for i := 0; i < 50; i++ {
+		wg.Add(1)
+		go func(i int) {
+			worker(ctx, c, i+1)
+			wg.Done()
+		}(i)
+	}
+	wg.Wait()
+	log.Printf("Async: total time cost: %v seconds", time.Since(startTime).Seconds())
 }

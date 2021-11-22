@@ -18,12 +18,17 @@ message MultipleRequest {
     int32 b = 2;
 }
 
-message MultipleResponse {
+message CommonResponse {
     int32 results = 1;
     string message = 2;
 }
 
+message FibRequest {
+    int32 number = 1;
+}
+
 service CalculatorService {
-    rpc Add(AddRequest) returns(AddResponse);
-    rpc Multiple(MultipleRequest) returns(MultipleResponse);
+    rpc Add(AddRequest) returns(CommonResponse);
+    rpc Multiple(MultipleRequest) returns(CommonResponse);
+    rpc Fib(FibRequest) returns(CommonResponse);
 }

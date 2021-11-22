@@ -18,8 +18,9 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type CalculatorServiceClient interface {
-	Add(ctx context.Context, in *AddRequest, opts ...grpc.CallOption) (*AddResponse, error)
-	Multiple(ctx context.Context, in *MultipleRequest, opts ...grpc.CallOption) (*MultipleResponse, error)
+	Add(ctx context.Context, in *AddRequest, opts ...grpc.CallOption) (*CommonResponse, error)
+	Multiple(ctx context.Context, in *MultipleRequest, opts ...grpc.CallOption) (*CommonResponse, error)
+	Fib(ctx context.Context, in *FibRequest, opts ...grpc.CallOption) (*CommonResponse, error)
 }
 
 type calculatorServiceClient struct {
@@ -30,8 +31,8 @@ func NewCalculatorServiceClient(cc grpc.ClientConnInterface) CalculatorServiceCl
 	return &calculatorServiceClient{cc}
 }
 
-func (c *calculatorServiceClient) Add(ctx context.Context, in *AddRequest, opts ...grpc.CallOption) (*AddResponse, error) {
-	out := new(AddResponse)
+func (c *calculatorServiceClient) Add(ctx context.Context, in *AddRequest, opts ...grpc.CallOption) (*CommonResponse, error) {
+	out := new(CommonResponse)
 	err := c.cc.Invoke(ctx, "/calculator.CalculatorService/Add", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -39,9 +40,18 @@ func (c *calculatorServiceClient) Add(ctx context.Context, in *AddRequest, opts 
 	return out, nil
 }
 
-func (c *calculatorServiceClient) Multiple(ctx context.Context, in *MultipleRequest, opts ...grpc.CallOption) (*MultipleResponse, error) {
-	out := new(MultipleResponse)
+func (c *calculatorServiceClient) Multiple(ctx context.Context, in *MultipleRequest, opts ...grpc.CallOption) (*CommonResponse, error) {
+	out := new(CommonResponse)
 	err := c.cc.Invoke(ctx, "/calculator.CalculatorService/Multiple", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *calculatorServiceClient) Fib(ctx context.Context, in *FibRequest, opts ...grpc.CallOption) (*CommonResponse, error) {
+	out := new(CommonResponse)
+	err := c.cc.Invoke(ctx, "/calculator.CalculatorService/Fib", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -52,8 +62,9 @@ func (c *calculatorServiceClient) Multiple(ctx context.Context, in *MultipleRequ
 // All implementations must embed UnimplementedCalculatorServiceServer
 // for forward compatibility
 type CalculatorServiceServer interface {
-	Add(context.Context, *AddRequest) (*AddResponse, error)
-	Multiple(context.Context, *MultipleRequest) (*MultipleResponse, error)
+	Add(context.Context, *AddRequest) (*CommonResponse, error)
+	Multiple(context.Context, *MultipleRequest) (*CommonResponse, error)
+	Fib(context.Context, *FibRequest) (*CommonResponse, error)
 	mustEmbedUnimplementedCalculatorServiceServer()
 }
 
@@ -61,11 +72,14 @@ type CalculatorServiceServer interface {
 type UnimplementedCalculatorServiceServer struct {
 }
 
-func (UnimplementedCalculatorServiceServer) Add(context.Context, *AddRequest) (*AddResponse, error) {
+func (UnimplementedCalculatorServiceServer) Add(context.Context, *AddRequest) (*CommonResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Add not implemented")
 }
-func (UnimplementedCalculatorServiceServer) Multiple(context.Context, *MultipleRequest) (*MultipleResponse, error) {
+func (UnimplementedCalculatorServiceServer) Multiple(context.Context, *MultipleRequest) (*CommonResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Multiple not implemented")
+}
+func (UnimplementedCalculatorServiceServer) Fib(context.Context, *FibRequest) (*CommonResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Fib not implemented")
 }
 func (UnimplementedCalculatorServiceServer) mustEmbedUnimplementedCalculatorServiceServer() {}
 
@@ -116,6 +130,24 @@ func _CalculatorService_Multiple_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
+func _CalculatorService_Fib_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(FibRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CalculatorServiceServer).Fib(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/calculator.CalculatorService/Fib",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CalculatorServiceServer).Fib(ctx, req.(*FibRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // CalculatorService_ServiceDesc is the grpc.ServiceDesc for CalculatorService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -130,6 +162,10 @@ var CalculatorService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Multiple",
 			Handler:    _CalculatorService_Multiple_Handler,
+		},
+		{
+			MethodName: "Fib",
+			Handler:    _CalculatorService_Fib_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
